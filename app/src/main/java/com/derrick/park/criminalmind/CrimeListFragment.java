@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -40,16 +41,24 @@ public class CrimeListFragment extends Fragment {
         mCrimeRecyclerView.setAdapter(mAdapter);
     }
 
-    private class CrimeHolder extends RecyclerView.ViewHolder {
+    private class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener  {
         TextView mTitleTextView;
         TextView mDateTextView;
         Crime mCrime = new Crime();
-        public CrimeHolder(LayoutInflater inflater, ViewGroup parent) {
-            super(inflater.inflate(R.layout.list_item_crime, parent, false));
+        public CrimeHolder(View itemView) {
+            super(itemView);
             //set id using itemView
             mTitleTextView = (TextView) itemView.findViewById(R.id.crime_title);
             mDateTextView = (TextView) itemView.findViewById(R.id.crime_date);
+            itemView.setOnClickListener(this);
         }
+
+        @Override
+        public void onClick(View view) {
+            int position = getLayoutPosition();
+            Toast.makeText(getActivity(), "test", Toast.LENGTH_SHORT).show();
+        }
+
         private void bind(Crime crime){
             //set texts
             mTitleTextView.setText(crime.getTitle());
@@ -68,8 +77,9 @@ public class CrimeListFragment extends Fragment {
         @Override
         // set the layout you want to display
         public CrimeHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-            return new CrimeHolder(layoutInflater, parent);
+//            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_crime, parent, false);
+            return new CrimeHolder(view);
         }
 
         @Override
