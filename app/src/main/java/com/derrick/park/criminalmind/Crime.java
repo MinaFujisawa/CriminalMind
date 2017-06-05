@@ -14,6 +14,7 @@ public class Crime {
     private String mTitle;
     private Date mDate;
     private boolean mSolved;
+    private int mRequiresPolice;
 
 
     public Crime() {
@@ -31,6 +32,14 @@ public class Crime {
 
     public Date getDate() {
         return mDate;
+    }
+
+    public int getmRequiresPolice() {
+        return mRequiresPolice;
+    }
+
+    public void setmRequiresPolice(int mRequiresPolice) {
+        this.mRequiresPolice = mRequiresPolice;
     }
 
     public boolean isSolved() {
