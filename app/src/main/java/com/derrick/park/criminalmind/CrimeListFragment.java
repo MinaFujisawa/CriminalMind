@@ -11,6 +11,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -24,11 +25,8 @@ public class CrimeListFragment extends Fragment {
     // declare mCrimeRecyclerView and mAdater pointed CrimeAdapter (inner class)
     RecyclerView mCrimeRecyclerView;
     CrimeAdapter mAdapter;
-    OnItemClickListener mOnItemClickListener;
-
-//    public interface OnItemClickListener {
-//        void onItemClick(Crime item);
-//    }
+    CrimeLab crimeLab = CrimeLab.get(getActivity());
+    List<Crime> crimes = crimeLab.getmCrimes();
 
 
 
@@ -42,11 +40,8 @@ public class CrimeListFragment extends Fragment {
     }
 
 
-
     //set adapter
     private void updateUI() {
-        CrimeLab crimeLab = CrimeLab.get(getActivity());
-        List<Crime> crimes = crimeLab.getmCrimes();
         mAdapter = new CrimeAdapter(crimes, new OnItemClickListener() {
             @Override
             public void onItemClick(Crime item) {
@@ -60,6 +55,7 @@ public class CrimeListFragment extends Fragment {
     private class CrimeHolder extends RecyclerView.ViewHolder {
         TextView mTitleTextView;
         TextView mDateTextView;
+        ImageView mSolvedImageView;
         Crime mCrime = new Crime();
 
         public CrimeHolder(View itemView) {
@@ -67,15 +63,22 @@ public class CrimeListFragment extends Fragment {
             //set id using itemView
             mTitleTextView = (TextView) itemView.findViewById(R.id.crime_title);
             mDateTextView = (TextView) itemView.findViewById(R.id.crime_date);
+            mSolvedImageView = (ImageView) itemView.findViewById(R.id.img_solved);
         }
 
-        private void bind(final Crime crime, final OnItemClickListener listener) {
+        private void bind(final Crime crime, final OnItemClickListener listener, int position) {
             //set texts
             mTitleTextView.setText(crime.getTitle());
             mDateTextView.setText(String.valueOf(crime.getDate()));
+            if(crimes.get(position).isSolved()){
+                mSolvedImageView.setVisibility(View.VISIBLE);
+            } else {
+                mSolvedImageView.setVisibility(View.INVISIBLE);
+            }
 
             itemView.setOnClickListener(new View.OnClickListener() {
-                @Override public void onClick(View v) {
+                @Override
+                public void onClick(View v) {
                     listener.onItemClick(crime);
                 }
             });
@@ -99,13 +102,7 @@ public class CrimeListFragment extends Fragment {
         // 各Listのレイアウトをinflateする
         public CrimeHolder onCreateViewHolder(ViewGroup parent, int viewType) {
 //            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-
-            View view;
-            if (viewType == 0) {
-                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_crime, parent, false);
-            } else {
-                view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_crime_serious, parent, false);
-            }
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_crime, parent, false);
             return new CrimeHolder(view);
 
         }
@@ -116,7 +113,7 @@ public class CrimeListFragment extends Fragment {
         @Override
         public void onBindViewHolder(CrimeHolder holder, int position) {
             Crime crime = mCrimes.get(position);
-            holder.bind(crime, listener);
+            holder.bind(crime, listener, position);
         }
 
         //データコレクションのsizeをreturn
@@ -132,8 +129,6 @@ public class CrimeListFragment extends Fragment {
         }
 
     }
-
-
 
 
 }
