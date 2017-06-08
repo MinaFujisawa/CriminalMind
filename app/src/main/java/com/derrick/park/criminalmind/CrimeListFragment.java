@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import java.text.DateFormat;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by park on 2017-06-01.
@@ -28,6 +29,8 @@ public class CrimeListFragment extends Fragment {
     CrimeAdapter mAdapter;
     CrimeLab crimeLab = CrimeLab.get(getActivity());
     List<Crime> crimes = crimeLab.getmCrimes();
+    private static final String EXTRA_ID = "CrimeListFragment_extra_title";
+    private int mCurrentPosition;
 
 
 
@@ -46,7 +49,10 @@ public class CrimeListFragment extends Fragment {
         mAdapter = new CrimeAdapter(crimes, new OnItemClickListener() {
             @Override
             public void onItemClick(Crime item) {
-                Toast.makeText(getActivity(), "test", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getActivity(), CrimeActivity.class);
+                String crimeID = String.valueOf(item.getId());
+                intent.putExtra(EXTRA_ID, crimeID);
+                startActivity(intent);
             }
         });
         mCrimeRecyclerView.setAdapter(mAdapter);
@@ -57,7 +63,6 @@ public class CrimeListFragment extends Fragment {
         TextView mTitleTextView;
         TextView mDateTextView;
         ImageView mSolvedImageView;
-        Crime mCrime = new Crime();
 
         public CrimeHolder(View itemView) {
             super(itemView);

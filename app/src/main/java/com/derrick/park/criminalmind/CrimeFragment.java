@@ -1,6 +1,7 @@
 package com.derrick.park.criminalmind;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.Editable;
@@ -12,6 +13,11 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.text.DateFormat;
+import java.util.UUID;
 
 import static android.widget.CompoundButton.*;
 
@@ -25,11 +31,18 @@ public class CrimeFragment extends Fragment {
     private EditText mTitleField;
     private Button mDateButton;
     private CheckBox mSolvedCheckBox;
+    private static final String EXTRA_ID = "CrimeListFragment_extra_title";
+    private UUID mCurrentCrimeID;
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mCrime = new Crime();
+        //get extra
+        Intent intent = getActivity().getIntent();
+        mCurrentCrimeID = UUID.fromString(intent.getStringExtra(EXTRA_ID));
+
+        mCrime = CrimeLab.get(getActivity()).getCrime(mCurrentCrimeID);
     }
 
     @Override
@@ -37,6 +50,7 @@ public class CrimeFragment extends Fragment {
         View v = inflater.inflate(R.layout.fragment_crime, container, false);
 
         mTitleField = (EditText) v.findViewById(R.id.crime_title);
+        mTitleField.setText(mCrime.getTitle());
         mTitleField.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
@@ -55,7 +69,7 @@ public class CrimeFragment extends Fragment {
         });
 
         mDateButton = (Button) v.findViewById(R.id.crime_date);
-        mDateButton.setText(mCrime.getDate().toString());
+        mDateButton.setText(DateFormat.getDateInstance().format(mCrime.getDate()));
         mDateButton.setEnabled(false);
 
         mSolvedCheckBox = (CheckBox) v.findViewById(R.id.crime_solved);
