@@ -31,7 +31,6 @@ public class CrimeFragment extends Fragment {
     private EditText mTitleField;
     private Button mDateButton;
     private CheckBox mSolvedCheckBox;
-    private static final String EXTRA_ID = "CrimeListFragment_extra_title";
     private UUID mCurrentCrimeID;
 
 
@@ -40,8 +39,7 @@ public class CrimeFragment extends Fragment {
         super.onCreate(savedInstanceState);
         //get extra
         Intent intent = getActivity().getIntent();
-        mCurrentCrimeID = UUID.fromString(intent.getStringExtra(EXTRA_ID));
-
+        mCurrentCrimeID = (UUID) intent.getSerializableExtra(CrimeListFragment.EXTRA_ID);
         mCrime = CrimeLab.get(getActivity()).getCrime(mCurrentCrimeID);
     }
 

@@ -29,8 +29,7 @@ public class CrimeListFragment extends Fragment {
     CrimeAdapter mAdapter;
     CrimeLab crimeLab = CrimeLab.get(getActivity());
     List<Crime> crimes = crimeLab.getmCrimes();
-    private static final String EXTRA_ID = "CrimeListFragment_extra_title";
-    private int mCurrentPosition;
+    public static final String EXTRA_ID = "CrimeListFragment_extra_title";
 
 
 
@@ -48,10 +47,9 @@ public class CrimeListFragment extends Fragment {
     private void updateUI() {
         mAdapter = new CrimeAdapter(crimes, new OnItemClickListener() {
             @Override
-            public void onItemClick(Crime item) {
+            public void onItemClick(Crime crime) {
                 Intent intent = new Intent(getActivity(), CrimeActivity.class);
-                String crimeID = String.valueOf(item.getId());
-                intent.putExtra(EXTRA_ID, crimeID);
+                intent.putExtra(EXTRA_ID, crime.getId());
                 startActivity(intent);
             }
         });
