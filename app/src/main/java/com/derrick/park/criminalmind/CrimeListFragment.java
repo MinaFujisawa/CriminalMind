@@ -30,6 +30,7 @@ public class CrimeListFragment extends Fragment {
     CrimeLab crimeLab = CrimeLab.get(getActivity());
     List<Crime> crimes = crimeLab.getmCrimes();
     public static final String EXTRA_ID = "CrimeListFragment_extra_title";
+    int mClickedPosition;
 
 
 
@@ -45,14 +46,19 @@ public class CrimeListFragment extends Fragment {
 
     //set adapter
     private void updateUI() {
-        mAdapter = new CrimeAdapter(crimes, new OnItemClickListener() {
-            @Override
-            public void onItemClick(Crime crime) {
-                Intent intent = new Intent(getActivity(), CrimeActivity.class);
-                intent.putExtra(EXTRA_ID, crime.getId());
-                startActivity(intent);
-            }
-        });
+
+        if(mAdapter == null){
+            mAdapter = new CrimeAdapter(crimes, new OnItemClickListener() {
+                @Override
+                public void onItemClick(Crime crime) {
+                    Intent intent = new Intent(getActivity(), CrimeActivity.class);
+                    intent.putExtra(EXTRA_ID, crime.getId());
+                    startActivity(intent);
+                }
+            });
+        } else {
+            mAdapter.notifyItemChanged(mClickedPosition);
+        }
         mCrimeRecyclerView.setAdapter(mAdapter);
     }
 
@@ -84,6 +90,8 @@ public class CrimeListFragment extends Fragment {
                 @Override
                 public void onClick(View v) {
                     listener.onItemClick(crime);
+                    mClickedPosition = getLayoutPosition();
+
                 }
             });
         }
@@ -134,5 +142,9 @@ public class CrimeListFragment extends Fragment {
 
     }
 
-
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateUI();
+    }
 }
