@@ -3,6 +3,7 @@ package com.derrick.park.criminalmind;
 import android.content.Context;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.UUID;
 
@@ -14,6 +15,7 @@ public class CrimeLab {
 
     private static CrimeLab sCrimeLab; //why static?
     private List<Crime> mCrimes;
+    private LinkedHashMap<UUID, Crime> mCrimes2;
 
 
     //if sCrimeLab hasn't made, make new one and return it
@@ -27,6 +29,15 @@ public class CrimeLab {
     // constructor : create arrayList and create crime instance and set title and solved then add it (as a dummy)
     public CrimeLab(Context context) {
         mCrimes = new ArrayList<>();
+        mCrimes2 = new LinkedHashMap<>();
+
+        for (int i = 0; i < 100; i++) {
+            Crime crime = new Crime();
+            crime.setTitle("Crime #" + i);
+            crime.setSolved(i % 2 == 0);
+            mCrimes2.put(crime.getId(),crime);
+        }
+
         for (int i = 0; i < 100; i++) {
             Crime crime = new Crime();
             crime.setTitle("Crime #" + i);
@@ -40,6 +51,10 @@ public class CrimeLab {
     //getter for mCrimes
     public List<Crime> getmCrimes() {
         return mCrimes;
+    }
+
+    public Crime getCirme(UUID id){
+        return mCrimes2.get(id);
     }
 
     //getter for getCrime using UUID for getting particular crime, if there aren't, return null

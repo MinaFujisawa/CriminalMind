@@ -24,127 +24,100 @@ import java.util.UUID;
  */
 
 public class CrimeListFragment extends Fragment {
-    // declare mCrimeRecyclerView and mAdater pointed CrimeAdapter (inner class)
-    RecyclerView mCrimeRecyclerView;
-    CrimeAdapter mAdapter;
-    CrimeLab crimeLab = CrimeLab.get(getActivity());
-    List<Crime> crimes = crimeLab.getmCrimes();
-    public static final String EXTRA_ID = "CrimeListFragment_extra_title";
-    int mClickedPosition;
+
+    private RecyclerView mCrimeRecyclerView;
+    private CrimeAdapter mAdater;
+    private int mLastAdapterClickedPosition = -1;
 
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        updateUI();
+    }
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_crime_list, container, false);
         mCrimeRecyclerView = (RecyclerView) view.findViewById(R.id.crime_recycler_view);
         mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-        updateUI();
+//        updateUI();
         return view;
     }
 
-
-    //set adapter
     private void updateUI() {
-
-        if(mAdapter == null){
-            mAdapter = new CrimeAdapter(crimes, new OnItemClickListener() {
-                @Override
-                public void onItemClick(Crime crime) {
-                    Intent intent = new Intent(getActivity(), CrimeActivity.class);
-                    intent.putExtra(EXTRA_ID, crime.getId());
-                    startActivity(intent);
-                }
-            });
+        CrimeLab crimeLab = CrimeLab.get(getActivity());
+        List<Crime> crimes = crimeLab.getmCrimes();
+        if (mAdater == null) {
+            mAdater = new CrimeAdapter(crimes);
+            mCrimeRecyclerView.setAdapter(mAdater);
         } else {
-            mAdapter.notifyItemChanged(mClickedPosition);
+            if (mLastAdapterClickedPosition < 0) {
+                mAdater.notifyDataSetChanged();
+            } else {
+                mAdater.notifyItemChanged(mLastAdapterClickedPosition);
+                mLastAdapterClickedPosition = -1;
+            }
         }
-        mCrimeRecyclerView.setAdapter(mAdapter);
+
     }
 
-    //各リストの内容
-    private class CrimeHolder extends RecyclerView.ViewHolder {
-        TextView mTitleTextView;
-        TextView mDateTextView;
-        ImageView mSolvedImageView;
+    private class CrimeHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
+        private TextView mTitleTextView;
+        private TextView mDateTextView;
+        private ImageView mSolvedImageView;
 
-        public CrimeHolder(View itemView) {
-            super(itemView);
-            //set id using itemView
+        private Crime mCrime;
+
+        public CrimeHolder(LayoutInflater inflater, ViewGroup parent) {
+            super(inflater.inflate(R.layout.list_item_crime, parent, false));
+
+            itemView.setOnClickListener(this);
             mTitleTextView = (TextView) itemView.findViewById(R.id.crime_title);
             mDateTextView = (TextView) itemView.findViewById(R.id.crime_date);
-            mSolvedImageView = (ImageView) itemView.findViewById(R.id.img_solved);
-        }
+            mSolvedImageView = (ImageView) itemView.findViewById(R.id.crime_solved);
 
-        private void bind(final Crime crime, final OnItemClickListener listener, int position) {
-            //set texts
-            mTitleTextView.setText(crime.getTitle());
-            mDateTextView.setText(String.valueOf(DateFormat.getDateInstance().format(crime.getDate())));
-            if(crimes.get(position).isSolved()){
-                mSolvedImageView.setVisibility(View.VISIBLE);
-            } else {
-                mSolvedImageView.setVisibility(View.INVISIBLE);
-            }
-
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    listener.onItemClick(crime);
-                    mClickedPosition = getLayoutPosition();
-
-                }
-            });
-        }
-    }
-
-    // adapter = help communicate between recycler actual data and viewholder
-    //Adapter - 実データ（text, img...) と ViewHolderの受け渡し
-    private class CrimeAdapter extends RecyclerView.Adapter<CrimeHolder> {
-
-        private List<Crime> mCrimes;
-        private final OnItemClickListener listener;
-
-        public CrimeAdapter(List<Crime> crimes, OnItemClickListener listener) {
-            this.mCrimes = crimes;
-            this.listener = listener;
         }
 
         @Override
-        // layout managerが新しいitem(view holder)を表示させるときに呼ばれる
-        // 各Listのレイアウトをinflateする
-        public CrimeHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-//            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
-            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_crime, parent, false);
-            return new CrimeHolder(view);
-
+        public void onClick(View v) {
+            mLastAdapterClickedPosition = getAdapterPosition();
+            Intent intent = CrimePagerActivity.newIntent(getActivity(), mCrime.getId());
+            startActivity(intent);
         }
 
+        public void bind(Crime crime) {
+            mCrime = crime;
+            mTitleTextView.setText(mCrime.getTitle());
+            mDateTextView.setText(mCrime.getDate().toString());
+            mSolvedImageView.setVisibility(mCrime.isSolved() ? View.VISIBLE : View.GONE);
+        }
 
-        //特定のPosition(row)にデータをsetする
-        //Display the data at the specified position
+    }
+
+    private class CrimeAdapter extends RecyclerView.Adapter<CrimeHolder> {
+        private List<Crime> mCrimes;
+
+        public CrimeAdapter(List<Crime> crimes) {
+            mCrimes = crimes;
+        }
+
+        @Override
+        public CrimeHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            LayoutInflater layoutInflater = LayoutInflater.from(getActivity());
+            return new CrimeHolder(layoutInflater, parent);
+        }
+
         @Override
         public void onBindViewHolder(CrimeHolder holder, int position) {
             Crime crime = mCrimes.get(position);
-            holder.bind(crime, listener, position);
+            holder.bind(crime);
         }
 
-        //データコレクションのsizeをreturn
+
         @Override
         public int getItemCount() {
             return mCrimes.size();
         }
-
-        //itemによって処理を変えるのに必要
-        @Override
-        public int getItemViewType(int position) {
-            return mCrimes.get(position).getmRequiresPolice();
-        }
-
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        updateUI();
     }
 }
