@@ -53,19 +53,19 @@ public class DatePickerFragment extends DialogFragment {
         // Use the item's date as the default date in the picker
         final Calendar c = Calendar.getInstance();
         c.setTime(mItemsDate);
-//        final int year = c.get(Calendar.YEAR);
-        final int year = 2020;
+        int year = c.get(Calendar.YEAR);
         int month = c.get(Calendar.MONTH);
         int day = c.get(Calendar.DAY_OF_MONTH);
 
 
         View view = getActivity().getLayoutInflater().inflate(R.layout.dialog_date, null);
         mDatePicker = (DatePicker) view.findViewById(R.id.date_picker_view);
-        mDatePicker.updateDate(year, month, day);
+//        mDatePicker.updateDate(year, month, day);
+        mDatePicker.init(year, month, day, null);
 
         return new AlertDialog.Builder(getActivity())
                 .setView(view)
-                .setTitle("Title")
+                .setTitle("Date of crime")
                 .setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
