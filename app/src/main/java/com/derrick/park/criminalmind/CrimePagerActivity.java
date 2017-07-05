@@ -10,6 +10,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.AppCompatActivity;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -29,7 +30,7 @@ import java.util.zip.Inflater;
  * Created by MinaFujisawa on 2017/06/12.
  */
 
-public class CrimePagerActivity extends FragmentActivity implements DatePickerDialog.OnDateSetListener {
+public class CrimePagerActivity extends AppCompatActivity implements DatePickerDialog.OnDateSetListener {
     /**
      * The number of pages (wizard steps) to show in this demo.
      */
