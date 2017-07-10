@@ -79,8 +79,11 @@ public class CrimeListFragment extends Fragment {
 
     private void updateSubtitle() {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
-        int crimeCount = crimeLab.getmCrimes().size();
-        String subtitle = getString(R.string.subtitle_format, crimeCount);
+        int crimeCount = crimeLab.getCrimes().size();
+
+        String subtitle = getResources().getQuantityString(R.plurals.subtitle_plural,crimeCount, crimeCount);
+//        String subtitle = getString(R.string.subtitle_format, crimeCount);
+
         if (!mSubtitleVisible) {
             subtitle = null;
         }
@@ -92,7 +95,7 @@ public class CrimeListFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (!CrimeLab.get(getActivity()).getmCrimes().isEmpty()) {
+        if (!CrimeLab.get(getActivity()).getCrimes().isEmpty()) {
             updateUI();
         }
 //
@@ -113,7 +116,7 @@ public class CrimeListFragment extends Fragment {
 
     private void updateUI() {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
-        List<Crime> crimes = crimeLab.getmCrimes();
+        List<Crime> crimes = crimeLab.getCrimes();
         if (mAdapter == null) {
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
@@ -124,6 +127,7 @@ public class CrimeListFragment extends Fragment {
                 mAdapter.notifyItemChanged(mLastAdapterClickedPosition);
                 mLastAdapterClickedPosition = -1;
             }
+            mAdapter.setCrimes(crimes);
         }
 
         updateSubtitle();
@@ -191,6 +195,10 @@ public class CrimeListFragment extends Fragment {
         @Override
         public int getItemCount() {
             return mCrimes.size();
+        }
+
+        public void setCrimes(List<Crime> crimes) {
+            mCrimes = crimes;
         }
     }
 
