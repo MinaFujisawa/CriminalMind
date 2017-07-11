@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase;
 import com.derrick.park.criminalmind.database.CrimeBaseHelper;
 import com.derrick.park.criminalmind.database.CrimeCursorWrapper;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -21,12 +22,9 @@ import static com.derrick.park.criminalmind.database.CrimeDbSchema.*;
 
 public class CrimeLab {
 
-    private static CrimeLab sCrimeLab; //why static?
-    //    private List<Crime> mCrimes;
+    private static CrimeLab sCrimeLab;
     private Context mContext;
     private SQLiteDatabase mDatabase;
-
-    private LinkedHashMap<UUID, Crime> mCrimes2;
 
 
     //if sCrimeLab hasn't made, make new one and return it
@@ -53,6 +51,7 @@ public class CrimeLab {
         values.put(CrimeTable.Cols.DATE, crime.getDate().getTime());
         values.put(CrimeTable.Cols.SOLVED, crime.isSolved() ? 1 : 0);
         values.put(CrimeTable.Cols.SUSPECT, crime.getmSuspect());
+        values.put(CrimeTable.Cols.PHONE, crime.getmPhone());
 
         return values;
     }
@@ -122,6 +121,11 @@ public class CrimeLab {
         } finally {
             cursor.close();
         }
+    }
+
+    public File getPhotoFile(Crime crime){
+        File filesDir = mContext.getFilesDir();
+        return new File(filesDir, crime.getPhotoFilename()); //review
     }
 }
 

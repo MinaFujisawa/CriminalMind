@@ -1,16 +1,22 @@
 package com.derrick.park.criminalmind;
 
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.MediaStore;
 import android.support.v4.app.DialogFragment;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
+import android.support.v4.app.ShareCompat;
+import android.support.v4.content.FileProvider;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
@@ -24,10 +30,16 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.Toast;
 
+import java.io.File;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
+import static android.Manifest.permission.READ_CONTACTS;
 import static android.widget.CompoundButton.*;
 
 /**
@@ -42,9 +54,15 @@ public class CrimeFragment extends Fragment {
     private CheckBox mSolvedCheckBox;
     private Button mReportButton;
     private Button mSuspectButton;
+    private Button mCallButton;
+    private ImageButton mPhotoButton;
+    private ImageView mPhotoView;
+    private File mPhotoFile;
     private Date selectedDate;
     private final static int REQUEST_CONTACT = 0;
+    private static final int REQUEST_PHOTO = 2;
 
+    private final static int REQUEST_READ_CONTACTS = 1;
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "crime_date";
     private static final int REQUEST_CODE_DATEPICKER = 1;
@@ -65,6 +83,7 @@ public class CrimeFragment extends Fragment {
         setHasOptionsMenu(true);
         UUID crimeId = (UUID) getArguments().getSerializable(ARG_CRIME_ID);
         mCrime = CrimeLab.get(getActivity()).getCrime(crimeId);
+        mPhotoFile = CrimeLab.get(getActivity()).getPhotoFile(mCrime);
     }
 
     @Override
@@ -89,6 +108,15 @@ public class CrimeFragment extends Fragment {
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void updatePhotoView(){
+        if(mPhotoFile == null || !mPhotoFile.exists()){
+            mPhotoView.setImageDrawable(null);
+        } else {
+            Bitmap bitmap = PictureUtils.getScaleBitmap(mPhotoFile.getPath(),getActivity());
+            mPhotoView.setImageBitmap(bitmap);
         }
     }
 
@@ -143,12 +171,16 @@ public class CrimeFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 //Intent
-                Intent i = new Intent(Intent.ACTION_SEND);
-                i.setType("text/plain");
-                i.putExtra(Intent.EXTRA_TEXT, getCrimeReport());
-                i.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crime_report_subject));
+//                Intent i = new Intent(Intent.ACTION_SEND);
+//                i.setType("text/plain");
+//                i.putExtra(Intent.EXTRA_TEXT, getCrimeReport());
+//                i.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.crime_report_subject));
+                Intent i = ShareCompat.IntentBuilder.from(getActivity())
+                        .setText(getCrimeReport())
+                        .setSubject(getString(R.string.crime_report_subject))
+                        .setType("text/plain")
+                        .getIntent();
                 startActivity(i);
-
             }
         });
 
@@ -165,12 +197,56 @@ public class CrimeFragment extends Fragment {
             mSuspectButton.setText(mCrime.getmSuspect());
         }
 
-        PackageManager packageManager = getActivity().getPackageManager();
+        final PackageManager packageManager = getActivity().getPackageManager();
 
-        //?
+        //implicit intentを取り扱うアプリをユーザーが持っていないときの対応。resolveActivityがnullかどうかチェック必要
+        // resolveActivity(Intent, flags(int)) flag = true/falseの状態を管理する変数
         if (packageManager.resolveActivity(pickContact, packageManager.MATCH_DEFAULT_ONLY) == null) {
             mSuspectButton.setEnabled(false);
         }
+
+
+        mCallButton = (Button) v.findViewById(R.id.crime_call);
+        mCallButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(Intent.ACTION_CALL);
+
+//                i.setData(Uri.parse(mCrime.getmPhone())); //Intentの第二引数もおｋ
+//                startActivity(i);
+            }
+        });
+
+        mPhotoButton = (ImageButton) v.findViewById(R.id.crime_camera);
+        final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        //review
+        boolean canTakePhoto = mPhotoFile != null
+                && captureImage.resolveActivity(packageManager) != null;
+
+        mPhotoButton.setEnabled(canTakePhoto);
+        mPhotoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Uri uri = FileProvider.getUriForFile(getActivity(), "com.derrick.park.criminalmind.fileprovider", mPhotoFile);
+                captureImage.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+                List<ResolveInfo> cameraActivities = getActivity().getPackageManager().queryIntentActivities(captureImage, packageManager.MATCH_DEFAULT_ONLY);
+
+                //すべてのカメラアプリをgrantしている
+                for(ResolveInfo activity : cameraActivities){
+                    getActivity().grantUriPermission(activity.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
+                }
+
+                startActivityForResult(captureImage, REQUEST_PHOTO);
+            }
+        });
+
+
+        mPhotoView = (ImageView) v.findViewById(R.id.crime_photo);
+        updatePhotoView();
+
+
         return v;
     }
 
@@ -191,17 +267,35 @@ public class CrimeFragment extends Fragment {
                             null,
                             null
                     );
+
+            requestPermissions(new String[]{Manifest.permission.READ_CONTACTS}, 1);
+            Cursor phoneCursor = getActivity().getContentResolver()
+                    .query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                            new String[]{ContactsContract.CommonDataKinds.Phone.NUMBER},
+                            null,
+                            null,
+                            null
+                    );
             try {
                 if (c.getCount() == 0) {
                     return;
                 }
                 c.moveToFirst();
-                String suspect = c.getString(0); //0 = columnIndex たぶん基本いつも0
+                phoneCursor.moveToFirst();
+                String suspect = c.getString(0); //0 = columnIndex
+                String phone = phoneCursor.getString(0);
                 mCrime.setmSuspect(suspect);
+                mCrime.setmPhone(phone);
                 mSuspectButton.setText(suspect);
             } finally {
                 c.close();
+                phoneCursor.close();
             }
+        } else if(requestCode == REQUEST_PHOTO){
+            Uri uri = FileProvider.getUriForFile(getActivity(), "com.derrick.park.criminalmind.fileprovider", mPhotoFile);
+            getActivity().revokeUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            updatePhotoView();
+
         }
     }
 
