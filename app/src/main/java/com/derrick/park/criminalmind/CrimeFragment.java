@@ -20,6 +20,7 @@ import android.support.v4.content.FileProvider;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.text.format.DateFormat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -59,13 +60,13 @@ public class CrimeFragment extends Fragment {
     private ImageView mPhotoView;
     private File mPhotoFile;
     private Date selectedDate;
-    private final static int REQUEST_CONTACT = 0;
-    private static final int REQUEST_PHOTO = 2;
 
-    private final static int REQUEST_READ_CONTACTS = 1;
+    private final static int REQUEST_CONTACT = 0;
+    private static final int REQUEST_CODE_DATEPICKER = 1;
+    private static final int REQUEST_PHOTO = 2;
+    private final static int REQUEST_READ_CONTACTS = 3;
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "crime_date";
-    private static final int REQUEST_CODE_DATEPICKER = 1;
     public final static String SET_DATE = "criminalMind_set_date";
 
     public static CrimeFragment newInstance(UUID crimeId) {
@@ -115,7 +116,7 @@ public class CrimeFragment extends Fragment {
         if(mPhotoFile == null || !mPhotoFile.exists()){
             mPhotoView.setImageDrawable(null);
         } else {
-            Bitmap bitmap = PictureUtils.getScaleBitmap(mPhotoFile.getPath(),getActivity());
+            Bitmap bitmap = PictureUtils.getScaledBitmap(mPhotoFile.getPath(),getActivity());
             mPhotoView.setImageBitmap(bitmap);
         }
     }
@@ -210,12 +211,16 @@ public class CrimeFragment extends Fragment {
         mCallButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent i = new Intent(Intent.ACTION_CALL);
+                Uri uri = Uri.parse("tel:" + mCrime.getmPhone());
+                Intent i = new Intent(Intent.ACTION_DIAL, uri);
+                startActivity(i);
 
-//                i.setData(Uri.parse(mCrime.getmPhone())); //Intentの第二引数もおｋ
-//                startActivity(i);
             }
         });
+        if (mCrime.getmPhone() != null) {
+            mCallButton.setText(mCrime.getmPhone());
+        }
+
 
         mPhotoButton = (ImageButton) v.findViewById(R.id.crime_camera);
         final Intent captureImage = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
@@ -230,6 +235,7 @@ public class CrimeFragment extends Fragment {
             public void onClick(View v) {
                 Uri uri = FileProvider.getUriForFile(getActivity(), "com.derrick.park.criminalmind.fileprovider", mPhotoFile);
                 captureImage.putExtra(MediaStore.EXTRA_OUTPUT, uri);
+                //引数のIntentに対応できるActivityを持つアプリを取得
                 List<ResolveInfo> cameraActivities = getActivity().getPackageManager().queryIntentActivities(captureImage, packageManager.MATCH_DEFAULT_ONLY);
 
                 //すべてのカメラアプリをgrantしている
@@ -287,12 +293,15 @@ public class CrimeFragment extends Fragment {
                 mCrime.setmSuspect(suspect);
                 mCrime.setmPhone(phone);
                 mSuspectButton.setText(suspect);
+                mCallButton.setText(phone);
+
             } finally {
                 c.close();
                 phoneCursor.close();
             }
         } else if(requestCode == REQUEST_PHOTO){
             Uri uri = FileProvider.getUriForFile(getActivity(), "com.derrick.park.criminalmind.fileprovider", mPhotoFile);
+            //revokeUriPermission = permissionをclose
             getActivity().revokeUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
             updatePhotoView();
 

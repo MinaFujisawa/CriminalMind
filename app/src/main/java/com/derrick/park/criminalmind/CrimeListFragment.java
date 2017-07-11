@@ -81,7 +81,7 @@ public class CrimeListFragment extends Fragment {
         CrimeLab crimeLab = CrimeLab.get(getActivity());
         int crimeCount = crimeLab.getCrimes().size();
 
-        String subtitle = getResources().getQuantityString(R.plurals.subtitle_plural,crimeCount, crimeCount);
+        String subtitle = getResources().getQuantityString(R.plurals.subtitle_plural, crimeCount, crimeCount);
 //        String subtitle = getString(R.string.subtitle_format, crimeCount);
 
         if (!mSubtitleVisible) {
@@ -95,13 +95,7 @@ public class CrimeListFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        if (!CrimeLab.get(getActivity()).getCrimes().isEmpty()) {
-            updateUI();
-        }
-//
-//        if(mSubtitleVisible){
-//            updateSubtitle();
-//        }
+        updateUI();
     }
 
     @Override
@@ -110,7 +104,7 @@ public class CrimeListFragment extends Fragment {
         view = inflater.inflate(R.layout.fragment_crime_list, container, false);
         mCrimeRecyclerView = (RecyclerView) view.findViewById(R.id.crime_recycler_view);
         mCrimeRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
-//        updateUI();
+        updateUI();
         return view;
     }
 
@@ -121,15 +115,13 @@ public class CrimeListFragment extends Fragment {
             mAdapter = new CrimeAdapter(crimes);
             mCrimeRecyclerView.setAdapter(mAdapter);
         } else {
-            if (mLastAdapterClickedPosition < 0) {
-                mAdapter.notifyDataSetChanged();
-            } else {
+            if (mLastAdapterClickedPosition >= 0) {
                 mAdapter.notifyItemChanged(mLastAdapterClickedPosition);
                 mLastAdapterClickedPosition = -1;
             }
             mAdapter.setCrimes(crimes);
         }
-
+        mAdapter.notifyDataSetChanged();
         updateSubtitle();
     }
 
