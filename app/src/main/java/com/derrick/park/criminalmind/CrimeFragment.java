@@ -3,6 +3,7 @@ package com.derrick.park.criminalmind;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.Dialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
@@ -250,6 +251,16 @@ public class CrimeFragment extends Fragment {
 
 
         mPhotoView = (ImageView) v.findViewById(R.id.crime_photo);
+        mPhotoView.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // display dialog
+                FragmentManager manager = getActivity().getSupportFragmentManager();
+
+                ZoomedPhotoFragment dialog = ZoomedPhotoFragment.newInstance(mPhotoFile);
+                dialog.show(manager, "a");
+            }
+
+        });
         updatePhotoView();
 
 
