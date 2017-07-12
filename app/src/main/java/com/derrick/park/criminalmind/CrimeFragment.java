@@ -10,6 +10,7 @@ import android.content.pm.ResolveInfo;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.MediaStore;
@@ -28,12 +29,14 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import java.io.File;
@@ -42,6 +45,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static android.Manifest.permission.READ_CONTACTS;
+import static android.content.ContentValues.TAG;
 import static android.widget.CompoundButton.*;
 
 /**
@@ -61,6 +65,10 @@ public class CrimeFragment extends Fragment {
     private ImageView mPhotoView;
     private File mPhotoFile;
     private Date selectedDate;
+    private LinearLayout mParentLayout;
+    private ViewTreeObserver.OnGlobalLayoutListener mGlobalLayoutListener;
+    private int mPhotoWidth;
+    private int mPhotoHeight;
 
     private final static int REQUEST_CONTACT = 0;
     private static final int REQUEST_CODE_DATEPICKER = 1;
@@ -69,6 +77,9 @@ public class CrimeFragment extends Fragment {
     private static final String ARG_CRIME_ID = "crime_id";
     private static final String DIALOG_DATE = "crime_date";
     public final static String SET_DATE = "criminalMind_set_date";
+
+    public CrimeFragment() {
+    }
 
     public static CrimeFragment newInstance(UUID crimeId) {
         Bundle args = new Bundle();
@@ -113,11 +124,11 @@ public class CrimeFragment extends Fragment {
         }
     }
 
-    private void updatePhotoView(){
-        if(mPhotoFile == null || !mPhotoFile.exists()){
+    private void updatePhotoView() {
+        if (mPhotoFile == null || !mPhotoFile.exists()) {
             mPhotoView.setImageDrawable(null);
         } else {
-            Bitmap bitmap = PictureUtils.getScaledBitmap(mPhotoFile.getPath(),getActivity());
+            Bitmap bitmap = PictureUtils.getScaledBitmap(mPhotoFile.getPath(), mPhotoWidth, mPhotoHeight);
             mPhotoView.setImageBitmap(bitmap);
         }
     }
@@ -240,7 +251,7 @@ public class CrimeFragment extends Fragment {
                 List<ResolveInfo> cameraActivities = getActivity().getPackageManager().queryIntentActivities(captureImage, packageManager.MATCH_DEFAULT_ONLY);
 
                 //すべてのカメラアプリをgrantしている
-                for(ResolveInfo activity : cameraActivities){
+                for (ResolveInfo activity : cameraActivities) {
                     getActivity().grantUriPermission(activity.activityInfo.packageName, uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
 
                 }
@@ -261,6 +272,19 @@ public class CrimeFragment extends Fragment {
             }
 
         });
+
+        mParentLayout = (LinearLayout) v.findViewById(R.id.top_container);
+        mGlobalLayoutListener = new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                mPhotoWidth = mPhotoView.getWidth();
+                mPhotoHeight = mPhotoView.getHeight();
+                Log.d(TAG, "width = " + mPhotoWidth); //why 210?
+                Log.d(TAG, "height = " + mPhotoHeight); //why 210?
+                removeOnGlobalLayoutListener(mParentLayout.getViewTreeObserver(), mGlobalLayoutListener);
+            }
+        };
+        mParentLayout.getViewTreeObserver().addOnGlobalLayoutListener(mGlobalLayoutListener);
         updatePhotoView();
 
 
@@ -310,7 +334,7 @@ public class CrimeFragment extends Fragment {
                 c.close();
                 phoneCursor.close();
             }
-        } else if(requestCode == REQUEST_PHOTO){
+        } else if (requestCode == REQUEST_PHOTO) {
             Uri uri = FileProvider.getUriForFile(getActivity(), "com.derrick.park.criminalmind.fileprovider", mPhotoFile);
             //revokeUriPermission = permissionをclose
             getActivity().revokeUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
@@ -343,6 +367,17 @@ public class CrimeFragment extends Fragment {
 
         String report = getString(R.string.crime_report, mCrime.getTitle(), dateString, solvedString, suspect);
         return report;
+    }
+
+    private static void removeOnGlobalLayoutListener(ViewTreeObserver observer, ViewTreeObserver.OnGlobalLayoutListener listener) {
+        if (observer == null) {
+            return ;
+        }
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.JELLY_BEAN) {
+            observer.removeGlobalOnLayoutListener(listener);
+        } else {
+            observer.removeOnGlobalLayoutListener(listener);
+        }
     }
 }
 
